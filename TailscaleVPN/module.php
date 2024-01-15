@@ -50,6 +50,7 @@ class TailscaleVPN extends IPSModule
             if (in_array($file->getFileName(), ['tailscale', 'tailscaled'])) {
                 $contents = file_get_contents($file->getPathName());
                 file_put_contents($target . $file->getFileName(), $contents);
+                chmod($target . $file->getFileName(), 0777);
             }
         }
         $this->UpdateFormField("DownloadIndicator", "caption", "Cleanup...");
