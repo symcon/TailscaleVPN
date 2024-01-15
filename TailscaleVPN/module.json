@@ -1,0 +1,14 @@
+{
+    "id": "{A8977F36-F103-5C71-DF00-F6F0D0EB03C7}",
+    "name": "TailscaleVPN",
+    "type": 0,
+    "vendor": "Tailscale",
+    "aliases": [
+        "Tailscale VPN"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "TSVPN",
+    "url": "https://www.symcon.de"
+}

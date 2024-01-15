@@ -1,0 +1,16 @@
+{
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Download",
+            "name": "DownloadButton",
+            "onClick": "TSVPN_Download($id);"
+        },
+        {
+            "type": "ProgressBar",
+            "indeterminate": true,
+            "visible": false,
+            "name": "DownloadIndicator"
+        }
+    ]
+}

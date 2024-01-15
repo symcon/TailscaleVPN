@@ -1,0 +1,12 @@
+{
+    "id": "{A58F03E2-DD86-C7C1-B9F6-0AE090E9AF9B}",
+    "name": "TailscaleVPN",
+    "author": "Symcon GmbH",
+    "url": "https://www.symcon.de",
+    "compatibility": {
+        "version": "7.0"
+    },
+    "version": "1.0",
+    "build": 0,
+    "date": 0
+}

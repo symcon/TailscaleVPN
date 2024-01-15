@@ -1,0 +1,5 @@
+.idea
+
+*.tgz
+tailscale
+tailscaled
