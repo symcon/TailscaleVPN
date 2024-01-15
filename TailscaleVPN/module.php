@@ -44,7 +44,7 @@ class TailscaleVPN extends IPSModule
         file_put_contents($target . $filename, fopen($download, 'r'));
 
         $this->UpdateFormField("DownloadIndicator", "caption", "Extracting...");
-        exec("tar xzf " . $target . $filename . " --strip-components 1 --exclude=systemd -C " . $target);
+        passthru("tar xzf " . $target . $filename . " --strip-components 1 --exclude=systemd -C " . $target);
 
         $this->UpdateFormField("DownloadIndicator", "caption", "Cleanup...");
         unlink($target . $filename);
