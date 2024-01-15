@@ -46,8 +46,12 @@ class TailscaleVPN extends IPSModule
         $this->UpdateFormField("DownloadIndicator", "caption", "Extracting...");
         ini_set('memory_limit', '128M');
         $phar = new PharData($target . $filename);
-        $phar->extractTo($target, ["tailscale", "tailscaled"], true);
-
+        foreach (new \RecursiveIteratorIterator($phar) as $file) {
+            if (in_array($file->getFileName(), ['tailscale', 'tailscaled'])) {
+                $contents = file_get_contents($file->getPathName());
+                file_put_contents($target . $file->getFileName(), $contents);
+            }
+        }
         $this->UpdateFormField("DownloadIndicator", "caption", "Cleanup...");
         unlink($target . $filename);
         $this->UpdateFormField("DownloadIndicator", "visible", false);
