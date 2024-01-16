@@ -101,9 +101,14 @@ class TailscaleVPN extends IPSModule
                 $version = $lines[0];
             }
             else {
-                $version = "Broken";
+                $form['actions'][0]['caption'] = $this->Translate('Fix');
+                $form['actions'][2]['caption'] = $this->Translate('The currently downloaded version seems broken!');
+                $form['actions'][2]['visible'] = true;
+                return json_encode($form);
             }
-            $status = shell_exec($this->getTarget() . "tailscale status");
+            exec($this->getTarget() . "tailscale status", $status, $exitCode);
+            $tunnelRunning = $exitCode == 0;
+            $status = implode(PHP_EOL, $status);
         }
 
         if ($version) {
@@ -122,7 +127,6 @@ class TailscaleVPN extends IPSModule
         }
 
         if ($status) {
-            $tunnelRunning = !strstr($status, "Tailscale is");
             if (!$tunnelRunning) {
                 $form['actions'][5]['caption'] = $status;
             }
