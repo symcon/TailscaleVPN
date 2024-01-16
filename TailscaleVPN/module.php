@@ -14,6 +14,8 @@ class TailscaleVPN extends IPSModule
         parent::Create();
 
         $this->RegisterPropertyString("AuthKey", "");
+
+        $this->RegisterTimer('Update', 10 * 1000, 'TSVPN_UpdateStatus($_IPS[\'TARGET\']);');
     }
 
     public function Destroy()
@@ -32,8 +34,6 @@ class TailscaleVPN extends IPSModule
         $this->MaintainAction('State', $hasAuthKey);
 
         $this->RegisterVariableString('Status', 'Status', '', 1);
-
-        $this->RegisterTimer('Update', 10 * 1000, 'TSVPN_UpdateStatus($_IPS[\'TARGET\']);');
 
         $this->UpdateStatus();
     }
