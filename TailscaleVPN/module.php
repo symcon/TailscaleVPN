@@ -124,7 +124,7 @@ class TailscaleVPN extends IPSModule
             $this->SetValue('Status', $this->Translate('Missing AuthKey!'));
         }
         else {
-            exec($this->getTarget() . "tailscale status", $status, $exitCode);
+            exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
             if ($exitCode == 0) {
                 $this->SetValue('Status', $this->Translate('Connected!'));
             } else {
@@ -171,7 +171,7 @@ class TailscaleVPN extends IPSModule
                 $form['actions'][2]['visible'] = true;
                 return json_encode($form);
             }
-            exec($this->getTarget() . "tailscale status", $status, $exitCode);
+            exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
             $tunnelRunning = $exitCode == 0;
             $status = implode(PHP_EOL, $status);
         }
