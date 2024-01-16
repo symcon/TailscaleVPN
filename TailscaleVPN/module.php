@@ -106,7 +106,18 @@ class TailscaleVPN extends IPSModule
 
     public function StartTunnel()
     {
-        exec($this->getTarget() . "tailscale up --auth-key=" . $this->ReadPropertyString("AuthKey"));
+        $hostname = "";
+
+        $address = IPS_GetLicensee();
+        $start = strpos($address, "+");
+        if($start !== false)
+        {
+            $end = strpos($address, "@");
+            $oem = substr($address, $start+1, $end - $start - 1);
+            $hostname = " " . "--hostname " . "symbox-" . $oem;
+        }
+
+        exec($this->getTarget() . "tailscale up --auth-key=" . $this->ReadPropertyString("AuthKey") . $hostname);
 
         // Give it some time to connect
         IPS_Sleep(2500);
