@@ -11,6 +11,18 @@
             "indeterminate": true,
             "visible": false,
             "name": "DownloadIndicator"
+        },
+        {
+            "type": "Label",
+            "name": "TailscaleVersion",
+            "caption": "",
+            "visible": false
+        },
+        {
+            "type": "Label",
+            "name": "TailscaleDeamon",
+            "caption": "",
+            "visible": false
         }
     ]
 }

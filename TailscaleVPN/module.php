@@ -26,17 +26,21 @@ class TailscaleVPN extends IPSModule
         parent::ApplyChanges();
     }
 
+    private function getTarget() {
+        if(strstr("SymBox", IPS_GetKernelPlatform()) !== false) {
+            return self::$targetProduction;
+        }
+        else {
+            return self::$targetDevelopment;
+        }
+    }
+
     public function Download()
     {
         $filename = sprintf(self::$filename, self::$version);
         $download = sprintf(self::$url, $filename);
+        $target = $this->getTarget();
 
-        if(strstr("SymBox", IPS_GetKernelPlatform()) !== false) {
-            $target = self::$targetProduction;
-        }
-        else {
-            $target = self::$targetDevelopment;
-        }
 
         $this->UpdateFormField("DownloadButton", "visible", false);
         $this->UpdateFormField("DownloadIndicator", "visible", true);
@@ -56,5 +60,39 @@ class TailscaleVPN extends IPSModule
         $this->UpdateFormField("DownloadIndicator", "caption", "Cleanup...");
         unlink($target . $filename);
         $this->UpdateFormField("DownloadIndicator", "visible", false);
+    }
+
+    public function GetConfigurationForm() {
+        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+
+        $version = false;
+        if (file_exists($this->getTarget() . "tailscale")) {
+            $result = shell_exec($this->getTarget() . "tailscale --version");
+            if ($result) {
+                $lines = explode("\n", $result);
+                $version = $lines[0];
+            }
+            else {
+                $version = "Broken";
+            }
+        }
+
+        if ($version) {
+            if ($version != self::$version) {
+                $form['actions'][0]['caption'] = $this->Translate('Update');
+            }
+            else {
+                $form['actions'][0]['visible'] = false;
+            }
+
+            $form['actions'][2]['caption'] = $this->Translate('Version') . ': ' . $version;
+            $form['actions'][2]['visible'] = true;
+
+            $serviceRunning = shell_exec("pidof tailscaled");
+            $form['actions'][3]['caption'] = $this->Translate('Status') . ': ' . ($serviceRunning ? $this->Translate("Service is running!") : $this->Translate("Service is stopped!"));
+            $form['actions'][3]['visible'] = true;
+        }
+
+        return json_encode($form);
     }
 }
