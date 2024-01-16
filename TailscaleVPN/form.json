@@ -1,4 +1,11 @@
 {
+    "elements": [
+        {
+            "type": "ValidationTextBox",
+            "caption": "Auth Key",
+            "name": "AuthKey"
+        }
+    ],
     "actions": [
         {
             "type": "Button",
@@ -22,6 +29,26 @@
             "type": "Label",
             "name": "TailscaleDeamon",
             "caption": "",
+            "visible": false
+        },
+        {
+            "type": "Button",
+            "caption": "Start Service",
+            "name": "StartServiceButton",
+            "onClick": "TSVPN_StartService($id);",
+            "visible": false
+        },
+        {
+            "type": "Label",
+            "name": "TailscaleStatus",
+            "caption": "",
+            "visible": false
+        },
+        {
+            "type": "Button",
+            "caption": "Start Tunnel",
+            "name": "StartTunnelButton",
+            "onClick": "TSVPN_StartTunnel($id);",
             "visible": false
         }
     ]
