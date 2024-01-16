@@ -201,7 +201,7 @@ class TailscaleVPN extends IPSModule
             $form['actions'][5]['visible'] = true;
         }
 
-        if ($version && $version !== "Broken") {
+        if ($version) {
             if (!$serviceRunning) {
                 $form['actions'][4]['visible'] = true;
             }
