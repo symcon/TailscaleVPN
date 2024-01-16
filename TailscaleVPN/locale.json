@@ -1,8 +1,22 @@
 {
     "translations": {
         "de": {
-            "Translation 1": "Übersetzung 1",
-            "Translation 2": "Übersetzung 2"
+            "VPN": "VPN",
+            "Connected!": "Verbunden!",
+            "Status": "Status",
+            "Missing AuthKey!": "AuthKey fehlt!",
+            "Fix": "Korrigieren",
+            "The currently downloaded version seems broken!": "Die aktuell heruntergeladene Version scheint defekt!",
+            "Update": "Aktualisieren",
+            "Version": "Version",
+            "Service": "Dienst",
+            "Running!": "Läuft!",
+            "Stopped!": "Gestoppt!",
+            "Tunnel": "Tunnel",
+            "Start Tunnel": "Tunnel starten",
+            "Start Service": "Dienst starten",
+            "Download": "Herunterladen",
+            "Auth Key": "Auth Key"
         }
     }
 }
