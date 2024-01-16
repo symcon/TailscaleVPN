@@ -128,10 +128,10 @@ class TailscaleVPN extends IPSModule
 
         if ($status) {
             if (!$tunnelRunning) {
-                $form['actions'][5]['caption'] = $status;
+                $form['actions'][5]['caption'] = $this->Translate('Tunnel') . ': ' . $status;
             }
             else {
-                $form['actions'][5]['caption'] = $this->Translate('Service') . ': ' . $this->Translate('Connected!');
+                $form['actions'][5]['caption'] = $this->Translate('Tunnel') . ': ' . $this->Translate('Connected!');
             }
             $form['actions'][5]['visible'] = true;
         }
