@@ -26,6 +26,35 @@ class TailscaleVPN extends IPSModule
     {
         //Never delete this line!
         parent::ApplyChanges();
+
+        $hasAuthKey = $this->ReadPropertyString("AuthKey") !== "";
+        $this->MaintainVariable('State', $this->Translate('VPN'), VARIABLETYPE_BOOLEAN, "Switch", 0, $hasAuthKey);
+        $this->MaintainAction('State', $hasAuthKey);
+
+        $this->RegisterVariableString('Status', 'Status', '', 1);
+
+        $this->RegisterTimer('Update', 10 * 1000, 'TSVPN_UpdateStatus($_IPS[\'TARGET\']);');
+
+        $this->UpdateStatus();
+    }
+
+    public function RequestAction($Ident, $Value) {
+        switch($Ident) {
+            case 'State':
+                if ($Value) {
+                    if (!$this->isServiceRunning()) {
+                        $this->StartService();
+                    }
+                    $this->StartTunnel();
+                }
+                else {
+                    $this->StopTunnel();
+                }
+                SetValue($this->GetIDForIdent($Ident), $Value);
+                break;
+            default:
+                throw new Exception("Invalid Ident");
+        }
     }
 
     private function getTarget() {
@@ -84,6 +113,42 @@ class TailscaleVPN extends IPSModule
 
         //Reload Form
         $this->ReloadForm();
+
+        //Update Status
+        $this->UpdateStatus();
+    }
+
+    public function UpdateStatus()
+    {
+        if ($this->ReadPropertyString("AuthKey") === "") {
+            $this->SetValue('Status', $this->Translate('Missing AuthKey!'));
+        }
+        else {
+            exec($this->getTarget() . "tailscale status", $status, $exitCode);
+            if ($exitCode == 0) {
+                $this->SetValue('Status', $this->Translate('Connected!'));
+            } else {
+                $this->SetValue('Status', implode(PHP_EOL, $status));
+            }
+        }
+    }
+
+    public function StopTunnel()
+    {
+        exec($this->getTarget() . "tailscale down");
+
+        // Give it some time to connect
+        IPS_Sleep(2500);
+
+        //Reload Form
+        $this->ReloadForm();
+
+        //Update Status
+        $this->UpdateStatus();
+    }
+
+    private function isServiceRunning() {
+        return shell_exec("pidof tailscaled");
     }
 
     public function GetConfigurationForm() {
@@ -91,7 +156,7 @@ class TailscaleVPN extends IPSModule
 
         $version = false;
         $status = false;
-        $serviceRunning = shell_exec("pidof tailscaled");
+        $serviceRunning = $this->isServiceRunning();
         $tunnelRunning = false;
 
         if (file_exists($this->getTarget() . "tailscale")) {
