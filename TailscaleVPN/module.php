@@ -77,7 +77,7 @@ class TailscaleVPN extends IPSModule
 
     public function StartTunnel()
     {
-        exec($this->getTarget() . "tailscale --auth-key=" . $this->ReadPropertyString("AuthKey"));
+        exec($this->getTarget() . "tailscale up --auth-key=" . $this->ReadPropertyString("AuthKey"));
 
         // Give it some time to connect
         IPS_Sleep(2500);
