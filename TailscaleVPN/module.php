@@ -91,6 +91,9 @@ class TailscaleVPN extends IPSModule
         $this->UpdateFormField("DownloadIndicator", "caption", "Cleanup...");
         unlink($target . $filename);
         $this->UpdateFormField("DownloadIndicator", "visible", false);
+
+        // Update Form after Download
+        $this->ReloadForm();
     }
 
     public function StartService()
