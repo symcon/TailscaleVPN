@@ -14,6 +14,7 @@ class TailscaleVPN extends IPSModule
         parent::Create();
 
         $this->RegisterPropertyString("AuthKey", "");
+        $this->RegisterPropertyString("AdvertiseRoutes", "[]");
 
         $this->RegisterTimer('Update', 10 * 1000, 'TSVPN_UpdateStatus($_IPS[\'TARGET\']);');
     }
@@ -111,6 +112,7 @@ class TailscaleVPN extends IPSModule
     {
         $hostname = "";
 
+        // Determine a nicer Hostname
         $address = IPS_GetLicensee();
         $start = strpos($address, "+");
         if($start !== false)
@@ -120,7 +122,20 @@ class TailscaleVPN extends IPSModule
             $hostname = " " . "--hostname " . "symbox-" . $oem;
         }
 
-        exec($this->getTarget() . "tailscale up --auth-key=" . $this->ReadPropertyString("AuthKey") . $hostname);
+        // Check if we want to advertise routes
+        $advertiseRoutes = "";
+        $routes = [];
+
+        $ar = json_decode($this->ReadPropertyString("AdvertiseRoutes"), true);
+        foreach ($ar as $r) {
+            $routes[] = $r['Route'];
+        }
+
+        if (count($routes) > 0) {
+            $advertiseRoutes = " " . "--advertise-routes=" . implode(",", $routes);
+        }
+
+        exec($this->getTarget() . "tailscale up --auth-key=" . $this->ReadPropertyString("AuthKey") . $hostname . $advertiseRoutes);
 
         // Give it some time to connect
         IPS_Sleep(2500);

@@ -4,6 +4,30 @@
             "type": "ValidationTextBox",
             "caption": "Auth Key",
             "name": "AuthKey"
+        },
+        {
+            "type": "List",
+            "name": "AdvertiseRoutes",
+            "caption": "Advertise Routes",
+            "rowCount": 5,
+            "add": true,
+            "delete": true,
+            "sort": {
+                "column": "Route",
+                "direction": "ascending"
+            },
+            "columns": [
+                {
+                    "caption": "Route",
+                    "name": "Route",
+                    "width": "auto",
+                    "add": "",
+                    "edit": {
+                        "type": "ValidationTextBox"
+                    }
+                }
+            ],
+            "values": []
         }
     ],
     "actions": [
