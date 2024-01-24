@@ -73,7 +73,6 @@ class TailscaleVPN extends IPSModule
         $download = sprintf(self::$url, $filename);
         $target = $this->getTarget();
 
-
         $this->UpdateFormField("DownloadButton", "visible", false);
         $this->UpdateFormField("DownloadIndicator", "visible", true);
         $this->UpdateFormField("DownloadIndicator", "caption", "Downloading...");
@@ -95,6 +94,16 @@ class TailscaleVPN extends IPSModule
 
         // Update Form after Download
         $this->ReloadForm();
+
+        // Stop Tunnel
+        if ($this->isTunnelRunning()) {
+            $this->StopTunnel();
+        }
+
+        // Stop Service
+        if ($this->isServiceRunning()) {
+            $this->StopService();
+        }
     }
 
     public function StartService()
@@ -157,11 +166,12 @@ class TailscaleVPN extends IPSModule
             $this->SetValue('Status', $this->Translate('Missing AuthKey!'));
         }
         else {
-            exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
-            if ($exitCode == 0) {
+            if ($this->isTunnelRunning()) {
                 $this->SetValue('Status', $this->Translate('Connected!'));
+                $this->SetValue('State', true);
             } else {
-                $this->SetValue('Status', implode(PHP_EOL, $status));
+                $this->SetValue('Status', implode(PHP_EOL, $this->getTunnelStatus()));
+                $this->SetValue('State', false);
             }
         }
     }
@@ -180,8 +190,32 @@ class TailscaleVPN extends IPSModule
         $this->UpdateStatus();
     }
 
+    public function StopService()
+    {
+        exec($this->getTarget() . "kill pidof tailscaled");
+
+        // Give it some time to connect
+        IPS_Sleep(2500);
+
+        //Reload Form
+        $this->ReloadForm();
+
+        //Update Status
+        $this->UpdateStatus();
+    }
+
     private function isServiceRunning() {
         return shell_exec("pidof tailscaled");
+    }
+
+    private function isTunnelRunning() {
+        exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
+        return $exitCode == 0;
+    }
+
+    private function getTunnelStatus() {
+        exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
+        return $status;
     }
 
     public function GetConfigurationForm() {
