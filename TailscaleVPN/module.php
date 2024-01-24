@@ -69,6 +69,16 @@ class TailscaleVPN extends IPSModule
 
     public function Download()
     {
+        // Stop Tunnel
+        if ($this->isTunnelRunning()) {
+            $this->StopTunnel();
+        }
+
+        // Stop Service
+        if ($this->isServiceRunning()) {
+            $this->StopService();
+        }
+
         $filename = sprintf(self::$filename, self::$version);
         $download = sprintf(self::$url, $filename);
         $target = $this->getTarget();
@@ -94,16 +104,6 @@ class TailscaleVPN extends IPSModule
 
         // Update Form after Download
         $this->ReloadForm();
-
-        // Stop Tunnel
-        if ($this->isTunnelRunning()) {
-            $this->StopTunnel();
-        }
-
-        // Stop Service
-        if ($this->isServiceRunning()) {
-            $this->StopService();
-        }
     }
 
     public function StartService()
