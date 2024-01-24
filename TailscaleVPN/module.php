@@ -192,7 +192,7 @@ class TailscaleVPN extends IPSModule
 
     public function StopService()
     {
-        exec($this->getTarget() . "kill $(pidof tailscaled)");
+        exec("kill $(pidof tailscaled)");
 
         // Give it some time to disconnect
         IPS_Sleep(2500);
