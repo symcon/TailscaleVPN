@@ -45,11 +45,14 @@ class TailscaleVPN extends IPSModule
                 if ($Value) {
                     if (!$this->isServiceRunning()) {
                         $this->StartService();
+                        $this->ReloadForm();
                     }
                     $this->StartTunnel();
+                    $this->ReloadForm();
                 }
                 else {
                     $this->StopTunnel();
+                    $this->ReloadForm();
                 }
                 SetValue($this->GetIDForIdent($Ident), $Value);
                 break;
@@ -67,15 +70,22 @@ class TailscaleVPN extends IPSModule
         }
     }
 
-    public function Download()
+    public function UIDownload()
     {
+        $this->UpdateFormField("DownloadButton", "visible", false);
+        $this->UpdateFormField("DownloadIndicator", "visible", true);
+
         // Stop Tunnel
-        if ($this->isTunnelRunning()) {
+        $tunnelRunning = $this->isTunnelRunning();
+        if ($tunnelRunning) {
+            $this->UpdateFormField("DownloadIndicator", "caption", "Stopping Tunnel...");
             $this->StopTunnel();
         }
 
         // Stop Service
-        if ($this->isServiceRunning()) {
+        $serviceRunning = $this->isServiceRunning();
+        if ($serviceRunning) {
+            $this->UpdateFormField("DownloadIndicator", "caption", "Stopping Service...");
             $this->StopService();
         }
 
@@ -83,8 +93,6 @@ class TailscaleVPN extends IPSModule
         $download = sprintf(self::$url, $filename);
         $target = $this->getTarget();
 
-        $this->UpdateFormField("DownloadButton", "visible", false);
-        $this->UpdateFormField("DownloadIndicator", "visible", true);
         $this->UpdateFormField("DownloadIndicator", "caption", "Downloading...");
         file_put_contents($target . $filename, fopen($download, 'r'));
 
@@ -100,13 +108,35 @@ class TailscaleVPN extends IPSModule
         }
         $this->UpdateFormField("DownloadIndicator", "caption", "Cleanup...");
         unlink($target . $filename);
+
+        if ($serviceRunning) {
+            $this->UpdateFormField("DownloadIndicator", "caption", "Starting Service...");
+            $this->StartService();
+        }
+
+        if ($tunnelRunning) {
+            $this->UpdateFormField("DownloadIndicator", "caption", "Starting Tunnel...");
+            $this->StartTunnel();
+        }
+
         $this->UpdateFormField("DownloadIndicator", "visible", false);
 
-        // Update Form after Download
+        $this->UpdateStatus();
+    }
+
+    public function UIStartService()
+    {
+        $this->StartService();
         $this->ReloadForm();
     }
 
-    public function StartService()
+    public function UIStartTunnel()
+    {
+        $this->StartTunnel();
+        $this->ReloadForm();
+    }
+
+    private function StartService()
     {
         if (!file_exists('/mnt/data/tailscale-state/')) {
             mkdir('/mnt/data/tailscale-state/');
@@ -117,11 +147,11 @@ class TailscaleVPN extends IPSModule
         // Give it some time to connect
         IPS_Sleep(2500);
 
-        //Reload Form
-        $this->ReloadForm();
+        //Update Status
+        $this->UpdateStatus();
     }
 
-    public function StartTunnel()
+    private function StartTunnel()
     {
         $hostname = "";
 
@@ -153,14 +183,11 @@ class TailscaleVPN extends IPSModule
         // Give it some time to connect
         IPS_Sleep(2500);
 
-        //Reload Form
-        $this->ReloadForm();
-
         //Update Status
         $this->UpdateStatus();
     }
 
-    public function UpdateStatus()
+    private function UpdateStatus()
     {
         if ($this->ReadPropertyString("AuthKey") === "") {
             $this->SetValue('Status', $this->Translate('Missing AuthKey!'));
@@ -176,29 +203,23 @@ class TailscaleVPN extends IPSModule
         }
     }
 
-    public function StopTunnel()
+    private function StopTunnel()
     {
         exec($this->getTarget() . "tailscale down");
 
         // Give it some time to disconnect
         IPS_Sleep(2500);
 
-        //Reload Form
-        $this->ReloadForm();
-
         //Update Status
         $this->UpdateStatus();
     }
 
-    public function StopService()
+    private function StopService()
     {
         exec("kill $(pidof tailscaled)");
 
         // Give it some time to disconnect
         IPS_Sleep(2500);
-
-        //Reload Form
-        $this->ReloadForm();
 
         //Update Status
         $this->UpdateStatus();
