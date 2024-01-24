@@ -180,7 +180,7 @@ class TailscaleVPN extends IPSModule
     {
         exec($this->getTarget() . "tailscale down");
 
-        // Give it some time to connect
+        // Give it some time to disconnect
         IPS_Sleep(2500);
 
         //Reload Form
@@ -192,9 +192,9 @@ class TailscaleVPN extends IPSModule
 
     public function StopService()
     {
-        exec($this->getTarget() . "kill pidof tailscaled");
+        exec($this->getTarget() . "kill $(pidof tailscaled)");
 
-        // Give it some time to connect
+        // Give it some time to disconnect
         IPS_Sleep(2500);
 
         //Reload Form
