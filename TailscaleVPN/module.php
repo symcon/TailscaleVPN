@@ -187,7 +187,7 @@ class TailscaleVPN extends IPSModule
         $this->UpdateStatus();
     }
 
-    private function UpdateStatus()
+    public function UpdateStatus()
     {
         if ($this->ReadPropertyString("AuthKey") === "") {
             $this->SetValue('Status', $this->Translate('Missing AuthKey!'));
