@@ -176,6 +176,10 @@ class TailscaleVPN extends IPSModule
 
         if (count($routes) > 0) {
             $advertiseRoutes = " " . "--advertise-routes=" . implode(",", $routes);
+
+            // Enable forwarding inside kernel only if required
+            exec("echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.conf");
+            exec("echo 'net.ipv6.conf.all.forwarding = 1' >> /etc/sysctl.conf");
         }
 
         exec($this->getTarget() . "tailscale up --auth-key=" . $this->ReadPropertyString("AuthKey") . $hostname . $advertiseRoutes);
