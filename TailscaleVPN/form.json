@@ -72,7 +72,7 @@
             "type": "Button",
             "caption": "Start Tunnel",
             "name": "StartTunnelButton",
-            "onClick": "TSVPN_UIStartTunnel($id);",
+            "onClick": "TSVPN_UIStartTunnel($id, '');",
             "visible": false
         }
     ]

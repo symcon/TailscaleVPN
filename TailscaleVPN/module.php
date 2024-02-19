@@ -13,7 +13,6 @@ class TailscaleVPN extends IPSModule
         //Never delete this line!
         parent::Create();
 
-        $this->RegisterPropertyString("AuthKey", "");
         $this->RegisterPropertyString("AdvertiseRoutes", "[]");
 
         $this->RegisterTimer('Update', 10 * 1000, 'TSVPN_UpdateStatus($_IPS[\'TARGET\']);');
@@ -30,9 +29,8 @@ class TailscaleVPN extends IPSModule
         //Never delete this line!
         parent::ApplyChanges();
 
-        $hasAuthKey = $this->ReadPropertyString("AuthKey") !== "";
-        $this->MaintainVariable('State', $this->Translate('VPN'), VARIABLETYPE_BOOLEAN, "Switch", 0, $hasAuthKey);
-        $this->MaintainAction('State', $hasAuthKey);
+        $this->RegisterVariable('State', $this->Translate('VPN'), VARIABLETYPE_BOOLEAN, "Switch", 0);
+        $this->RegisterAction('State');
 
         $this->RegisterVariableString('Status', 'Status', '', 1);
 
@@ -43,6 +41,10 @@ class TailscaleVPN extends IPSModule
         switch($Ident) {
             case 'State':
                 if ($Value) {
+                    if (!$this->isServiceInstalled()) {
+                        echo $this->Translate('Tailscale is not yet installed');
+                        return;
+                    }
                     if (!$this->isServiceRunning()) {
                         $this->StartService();
                         $this->ReloadForm();
@@ -122,6 +124,8 @@ class TailscaleVPN extends IPSModule
         $this->UpdateFormField("DownloadIndicator", "visible", false);
 
         $this->UpdateStatus();
+
+        $this->ReloadForm();
     }
 
     public function UIStartService()
@@ -130,9 +134,9 @@ class TailscaleVPN extends IPSModule
         $this->ReloadForm();
     }
 
-    public function UIStartTunnel()
+    public function UIStartTunnel(string $authKey)
     {
-        $this->StartTunnel();
+        $this->StartTunnel($authKey);
         $this->ReloadForm();
     }
 
@@ -151,7 +155,7 @@ class TailscaleVPN extends IPSModule
         $this->UpdateStatus();
     }
 
-    private function StartTunnel()
+    private function StartTunnel($authKey = "")
     {
         $hostname = "";
 
@@ -183,7 +187,11 @@ class TailscaleVPN extends IPSModule
             exec("sysctl -p");
         }
 
-        exec($this->getTarget() . "tailscale up --auth-key=" . $this->ReadPropertyString("AuthKey") . $hostname . $advertiseRoutes);
+        if ($authKey) {
+            $authKey = " " . "--auth-key=" . $authKey;
+        }
+
+        exec($this->getTarget() . "tailscale up" . $authKey . $hostname . $advertiseRoutes);
 
         // Give it some time to connect
         IPS_Sleep(2500);
@@ -194,17 +202,16 @@ class TailscaleVPN extends IPSModule
 
     public function UpdateStatus()
     {
-        if ($this->ReadPropertyString("AuthKey") === "") {
-            $this->SetValue('Status', $this->Translate('Missing AuthKey!'));
+        if (!$this->isServiceInstalled()) {
+            $this->SetValue('Status', $this->Translate('Not installed!'));
+            $this->SetValue('State', false);
         }
-        else {
-            if ($this->isTunnelRunning()) {
-                $this->SetValue('Status', $this->Translate('Connected!'));
-                $this->SetValue('State', true);
-            } else {
-                $this->SetValue('Status', implode(PHP_EOL, $this->getTunnelStatus()));
-                $this->SetValue('State', false);
-            }
+        else if ($this->isTunnelRunning()) {
+            $this->SetValue('Status', $this->Translate('Connected!'));
+            $this->SetValue('State', true);
+        } else {
+            $this->SetValue('Status', implode(PHP_EOL, $this->getTunnelStatus()));
+            $this->SetValue('State', false);
         }
     }
 
@@ -228,6 +235,10 @@ class TailscaleVPN extends IPSModule
 
         //Update Status
         $this->UpdateStatus();
+    }
+
+    private function isServiceInstalled() {
+        return file_exists($this->getTarget() . "tailscale");
     }
 
     private function isServiceRunning() {
