@@ -251,11 +251,11 @@ class TailscaleVPN extends IPSModule
 
     private function isTunnelRunning() {
         exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
-        return $exitCode == 0;
+        return ($exitCode == 0) && !str_contains(implode(PHP_EOL, $status), "not logged in");
     }
 
     private function getTunnelStatus() {
-        exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
+        exec($this->getTarget() . "tailscale status 2>&1", $status);
         return implode(PHP_EOL, $status);
     }
 
