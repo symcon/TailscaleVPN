@@ -80,14 +80,14 @@ class TailscaleVPN extends IPSModule
         // Stop Tunnel
         $tunnelRunning = $this->isTunnelRunning();
         if ($tunnelRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", "Stopping Tunnel...");
+            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Stopping Tunnel..."));
             $this->StopTunnel();
         }
 
         // Stop Service
         $serviceRunning = $this->isServiceRunning();
         if ($serviceRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", "Stopping Service...");
+            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Stopping Service..."));
             $this->StopService();
         }
 
@@ -95,10 +95,10 @@ class TailscaleVPN extends IPSModule
         $download = sprintf(self::$url, $filename);
         $target = $this->getTarget();
 
-        $this->UpdateFormField("DownloadIndicator", "caption", "Downloading...");
+        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Downloading..."));
         file_put_contents($target . $filename, fopen($download, 'r'));
 
-        $this->UpdateFormField("DownloadIndicator", "caption", "Extracting...");
+        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Extracting..."));
         ini_set('memory_limit', '128M');
         $phar = new PharData($target . $filename);
         foreach (new \RecursiveIteratorIterator($phar) as $file) {
@@ -108,20 +108,20 @@ class TailscaleVPN extends IPSModule
                 chmod($target . $file->getFileName(), 0777);
             }
         }
-        $this->UpdateFormField("DownloadIndicator", "caption", "Cleanup...");
+        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Cleanup..."));
         unlink($target . $filename);
 
         if ($serviceRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", "Starting Service...");
+            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Starting Service..."));
             $this->StartService();
         }
 
         if ($tunnelRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", "Starting Tunnel...");
+            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Starting Tunnel..."));
             $this->StartTunnel();
         }
 
-        $this->UpdateFormField("DownloadIndicator", "caption", "Please wait...");
+        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Please wait..."));
 
         $this->UpdateStatus();
 

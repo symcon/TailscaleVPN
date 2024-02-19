@@ -16,7 +16,15 @@
             "Start Tunnel": "Tunnel starten",
             "Start Service": "Dienst starten",
             "Download": "Herunterladen",
-            "Auth Key": "Auth Key"
+            "Auth Key": "Auth Key",
+            "Stopping Tunnel...": "Stoppe Tunnel...",
+            "Stopping Service...": "Stoppe Dienst...",
+            "Downloading...": "Herunterladen...",
+            "Extracting...": "Entpacken...",
+            "Cleanup...": "Aufräumen...",
+            "Starting Service...": "Starte Dienst...",
+            "Starting Tunnel...": "Starte Tunnel...",
+            "Please wait...": "Bitte Warten..."
         }
     }
 }
