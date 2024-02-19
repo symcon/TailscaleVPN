@@ -214,7 +214,7 @@ class TailscaleVPN extends IPSModule
             $this->SetValue('Status', $this->Translate('Connected!'));
             $this->SetValue('State', true);
         } else {
-            $this->SetValue('Status', implode(PHP_EOL, $this->getTunnelStatus()));
+            $this->SetValue('Status', $this->getTunnelStatus());
             $this->SetValue('State', false);
         }
     }
@@ -256,11 +256,11 @@ class TailscaleVPN extends IPSModule
 
     private function getTunnelStatus() {
         exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
-        return $status;
+        return implode(PHP_EOL, $status);
     }
 
     private function isTunnelAuthenticated() {
-        return $this->getTunnelStatus() != "Logged out.";
+        return str_contains($this->getTunnelStatus(), "Logged out.");
     }
 
     public function GetConfigurationForm() {
@@ -271,6 +271,7 @@ class TailscaleVPN extends IPSModule
         $serviceInstalled = $this->isServiceInstalled();
         $serviceRunning = $this->isServiceRunning();
         $tunnelRunning = false;
+        $tunnelAuthenticated = false;
 
         if (!$serviceInstalled) {
             // Do not allow any configuration as long as it is not installed
@@ -288,9 +289,9 @@ class TailscaleVPN extends IPSModule
                 $form['actions'][2]['visible'] = true;
                 return json_encode($form);
             }
-            exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
-            $tunnelRunning = $exitCode == 0;
-            $status = implode(PHP_EOL, $status);
+            $tunnelRunning = $this->isTunnelRunning();
+            $tunnelAuthenticated = $this->isTunnelAuthenticated();
+            $status = $this->getTunnelStatus();
         }
 
         if ($version) {
@@ -323,7 +324,12 @@ class TailscaleVPN extends IPSModule
                 $form['actions'][4]['visible'] = true;
             }
             else if (!$tunnelRunning) {
-                $form['actions'][6]['visible'] = true;
+                if ($tunnelAuthenticated) {
+                    $form['actions'][7]['visible'] = true;
+                }
+                else {
+                    $form['actions'][6]['visible'] = true;
+                }
             }
         }
 
