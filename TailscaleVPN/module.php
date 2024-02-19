@@ -192,7 +192,7 @@ class TailscaleVPN extends IPSModule
         }
 
         if ($authKey) {
-            $authKey = " " . "--auth-key=" . $authKey;
+            $authKey = " " . "--force-reauth --auth-key=" . $authKey;
         }
 
         exec($this->getTarget() . "tailscale up" . $authKey . $hostname . $advertiseRoutes);
