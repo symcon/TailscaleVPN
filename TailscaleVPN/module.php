@@ -16,7 +16,7 @@ class TailscaleVPN extends IPSModule
         $this->RegisterPropertyString("AdvertiseRoutes", "[]");
 
         $this->RegisterVariableBoolean('State', $this->Translate('VPN'), "Switch", 0);
-        $this->RegisterAction('State');
+        $this->EnableAction('State');
 
         $this->RegisterVariableString('Status', 'Status', '', 1);
 
