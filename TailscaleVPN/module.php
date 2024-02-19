@@ -260,10 +260,15 @@ class TailscaleVPN extends IPSModule
 
         $version = false;
         $status = false;
+        $serviceInstalled = $this->isServiceInstalled();
         $serviceRunning = $this->isServiceRunning();
         $tunnelRunning = false;
 
-        if (file_exists($this->getTarget() . "tailscale")) {
+        if (!$serviceInstalled) {
+            // Do not allow any configuration as long as it is not installed
+            unset($form['elements']);
+        }
+        else {
             $result = shell_exec($this->getTarget() . "tailscale --version");
             if ($result) {
                 $lines = explode("\n", $result);

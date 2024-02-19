@@ -1,11 +1,6 @@
 {
     "elements": [
         {
-            "type": "ValidationTextBox",
-            "caption": "Auth Key",
-            "name": "AuthKey"
-        },
-        {
             "type": "List",
             "name": "AdvertiseRoutes",
             "caption": "Advertise Routes",
