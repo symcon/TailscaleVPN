@@ -15,6 +15,11 @@ class TailscaleVPN extends IPSModule
 
         $this->RegisterPropertyString("AdvertiseRoutes", "[]");
 
+        $this->RegisterVariableBoolean('State', $this->Translate('VPN'), "Switch", 0);
+        $this->RegisterAction('State');
+
+        $this->RegisterVariableString('Status', 'Status', '', 1);
+
         $this->RegisterTimer('Update', 10 * 1000, 'TSVPN_UpdateStatus($_IPS[\'TARGET\']);');
     }
 
@@ -28,11 +33,6 @@ class TailscaleVPN extends IPSModule
     {
         //Never delete this line!
         parent::ApplyChanges();
-
-        $this->RegisterVariable('State', $this->Translate('VPN'), VARIABLETYPE_BOOLEAN, "Switch", 0);
-        $this->RegisterAction('State');
-
-        $this->RegisterVariableString('Status', 'Status', '', 1);
 
         $this->UpdateStatus();
     }
