@@ -64,6 +64,28 @@
             "visible": false
         },
         {
+            "type": "PopupButton",
+            "caption": "Authenticate with Tailscale",
+            "closeCaption": "Cancel",
+            "popup": {
+                "caption": "Authenticate with Tailscale",
+                "items": [
+                    {
+                        "type": "ValidationTextBox",
+                        "caption": "Auth Key",
+                        "name": "AuthKey"
+                    }
+                ],
+                "buttons": [
+                    {
+                        "caption": "Authenticate",
+                        "name": "AuthenticateStart",
+                        "onClick": "TSVPN_UIStartTunnel($id, $AuthKey);"
+                    }
+                ]
+            }
+        },
+        {
             "type": "Button",
             "caption": "Start Tunnel",
             "name": "StartTunnelButton",

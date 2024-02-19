@@ -49,6 +49,10 @@ class TailscaleVPN extends IPSModule
                         $this->StartService();
                         $this->ReloadForm();
                     }
+                    if (!$this->isTunnelAuthenticated()) {
+                        echo $this->Translate('Tailscale is not yet authenticated');
+                        return;
+                    }
                     $this->StartTunnel();
                     $this->ReloadForm();
                 }
@@ -253,6 +257,10 @@ class TailscaleVPN extends IPSModule
     private function getTunnelStatus() {
         exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
         return $status;
+    }
+
+    private function isTunnelAuthenticated() {
+        return $this->getTunnelStatus() != "Logged out.";
     }
 
     public function GetConfigurationForm() {

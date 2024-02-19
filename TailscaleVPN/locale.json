@@ -24,7 +24,11 @@
             "Cleanup...": "Aufräumen...",
             "Starting Service...": "Starte Dienst...",
             "Starting Tunnel...": "Starte Tunnel...",
-            "Please wait...": "Bitte Warten..."
+            "Please wait...": "Bitte Warten...",
+            "Tailscale is not yet installed": "Tailscale ist noch nicht installiert",
+            "Tailscale is not yet authenticated": "Tailscale ist noch nicht authentifiziert",
+            "Authenticate": "Authentifizieren",
+            "Authenticate with Tailscale": "Mit Tailscale authentifizieren"
         }
     }
 }
