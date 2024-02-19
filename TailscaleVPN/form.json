@@ -83,7 +83,8 @@
                         "onClick": "TSVPN_UIStartTunnel($id, $AuthKey);"
                     }
                 ]
-            }
+            },
+            "visible": false
         },
         {
             "type": "Button",
