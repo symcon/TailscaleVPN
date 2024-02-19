@@ -260,7 +260,7 @@ class TailscaleVPN extends IPSModule
     }
 
     private function isTunnelAuthenticated() {
-        return str_contains($this->getTunnelStatus(), "Logged out.");
+        return !str_contains($this->getTunnelStatus(), "Logged out.");
     }
 
     public function GetConfigurationForm() {
