@@ -121,7 +121,7 @@ class TailscaleVPN extends IPSModule
             $this->StartTunnel();
         }
 
-        $this->UpdateFormField("DownloadIndicator", "visible", false);
+        $this->UpdateFormField("DownloadIndicator", "caption", "Please wait...");
 
         $this->UpdateStatus();
 
