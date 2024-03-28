@@ -29,7 +29,8 @@
             "Tailscale is not yet authenticated": "Tailscale ist noch nicht authentifiziert",
             "Authenticate": "Authentifizieren",
             "Authenticate with Tailscale": "Mit Tailscale authentifizieren",
-            "Tailscale VPN is only available for SymBox!": "Tailscale VPN ist nur für die SymBox verfügbar!"
+            "Tailscale VPN is only available for SymBox!": "Tailscale VPN ist nur für die SymBox verfügbar!",
+            "Not installed!": "Nicht installiert!"
         }
     }
 }
