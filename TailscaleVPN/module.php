@@ -265,6 +265,16 @@ class TailscaleVPN extends IPSModule
     }
 
     public function GetConfigurationForm() {
+        if (IPS_GetKernelPlatform() != "SymBox") {
+            return json_encode([
+                "actions" => [
+                    [
+                        "type" => "Label",
+                        "caption" => $this->Translate("Tailscale VPN is only available for SymBox!"),
+                    ]
+            ]]);
+        }
+
         $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
 
         $version = false;
