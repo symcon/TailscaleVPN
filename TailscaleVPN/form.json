@@ -1,6 +1,11 @@
 {
     "elements": [
         {
+            "type": "CheckBox",
+            "name": "AutoStartVPN",
+            "caption": "Activate VPN on startup"
+        },
+        {
             "type": "List",
             "name": "AdvertiseRoutes",
             "caption": "Advertise Routes",

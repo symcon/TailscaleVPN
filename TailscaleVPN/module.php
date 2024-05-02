@@ -13,6 +13,8 @@ class TailscaleVPN extends IPSModule
         //Never delete this line!
         parent::Create();
 
+        $this->RegisterPropertyBoolean("AutoStartVPN", false);
+
         $this->RegisterPropertyString("AdvertiseRoutes", "[]");
 
         $this->RegisterVariableBoolean('State', $this->Translate('VPN'), "Switch", 0);
@@ -21,6 +23,8 @@ class TailscaleVPN extends IPSModule
         $this->RegisterVariableString('Status', 'Status', '', 1);
 
         $this->RegisterTimer('Update', 10 * 1000, 'TSVPN_UpdateStatus($_IPS[\'TARGET\']);');
+
+        $this->RegisterMessage(0, IPS_KERNELSTARTED);
     }
 
     public function Destroy()
@@ -29,12 +33,30 @@ class TailscaleVPN extends IPSModule
         parent::Destroy();
     }
 
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    {
+        if ($Message == IPS_KERNELSTARTED) {
+            $this->HandleAutostart();
+        }
+    }
+
     public function ApplyChanges()
     {
         //Never delete this line!
         parent::ApplyChanges();
 
         $this->UpdateStatus();
+    }
+
+    public function HandleAutostart() {
+        if ($this->isServiceInstalled()) {
+            if (!$this->isServiceRunning()) {
+                $this->StartService();
+            }
+            if ($this->isTunnelAuthenticated()) {
+                $this->StartTunnel();
+            }
+        }
     }
 
     public function RequestAction($Ident, $Value) {
