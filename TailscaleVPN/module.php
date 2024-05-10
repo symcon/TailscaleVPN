@@ -172,7 +172,19 @@ class TailscaleVPN extends IPSModule
             mkdir('/mnt/data/tailscale-state/');
         }
 
-        exec('sh -c "TS_DEBUG_FIREWALL_MODE=nftables exec nohup setsid' . ' ' . $this->getTarget() . 'tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &"');
+        //This does not detach from the symcon process and inherits file descriptors
+        //exec('TS_DEBUG_FIREWALL_MODE="nftables"' . ' ' . $this->getTarget() . "tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &");
+
+        //This properly detaches from the process but still inherits file descriptors
+        //exec('sh -c "TS_DEBUG_FIREWALL_MODE=nftables exec nohup setsid' . ' ' . $this->getTarget() . 'tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &"');
+
+        //We cannot use start-stop-daemon as it is buggy:  http://lists.busybox.net/pipermail/busybox/2019-March/087118.html
+        //echo exec('TS_DEBUG_FIREWALL_MODE=nftables start-stop-daemon -S -b -O /var/log/symcon/tailscale.log -x /mnt/data/tailscaled -- --statedir=/mnt/data/tailscale-state/');
+
+        //This does only properly work with IP-Symcon 7.2 which closes all fd's after fork and before exec
+        //But we cannot redirect the stdout/stderr with this method and it will be written to the statedir
+        putenv("TS_DEBUG_FIREWALL_MODE=nftables");
+        IPS_Execute($this->getTarget() . 'tailscaled', '--statedir=/mnt/data/tailscale-state/', false, false);
 
         // Give it some time to connect
         IPS_Sleep(2500);
