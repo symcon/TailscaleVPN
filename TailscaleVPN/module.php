@@ -172,7 +172,7 @@ class TailscaleVPN extends IPSModule
             mkdir('/mnt/data/tailscale-state/');
         }
 
-        exec('TS_DEBUG_FIREWALL_MODE="nftables"' . ' ' . $this->getTarget() . "tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &");
+        exec('sh -c "TS_DEBUG_FIREWALL_MODE=nftables exec nohup setsid' . ' ' . $this->getTarget() . 'tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &"');
 
         // Give it some time to connect
         IPS_Sleep(2500);
