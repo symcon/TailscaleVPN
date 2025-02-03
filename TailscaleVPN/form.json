@@ -97,6 +97,14 @@
             "name": "StartTunnelButton",
             "onClick": "TSVPN_UIStartTunnel($id, '');",
             "visible": false
+        },
+        {
+            "type": "Button",
+            "caption": "Reset completely",
+            "confirm": "Do you really want to remove Tailscale completely with all associated data?",
+            "name": "UninstallButton",
+            "onClick": "TSVPN_UIUninstall($id);",
+            "visible": false
         }
     ]
 }

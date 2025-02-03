@@ -31,7 +31,9 @@
             "Authenticate with Tailscale": "Mit Tailscale authentifizieren",
             "Tailscale VPN is only available for SymBox!": "Tailscale VPN ist nur für die SymBox verfügbar!",
             "Not installed!": "Nicht installiert!",
-            "Activate VPN on startup": "VPN beim Starten automatisch aktivieren"
+            "Activate VPN on startup": "VPN beim Starten automatisch aktivieren",
+            "Reset completely": "Komplett zurücksetzen",
+            "Do you really want to remove Tailscale completely with all associated data?": "Wollen Sie Tailscale wirklich komplett mit allen zugehörigen Daten entfernen?"
         }
     }
 }

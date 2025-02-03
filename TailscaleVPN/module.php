@@ -166,6 +166,15 @@ class TailscaleVPN extends IPSModule
         $this->ReloadForm();
     }
 
+    private function UIUninstall()
+    {
+        exec($this->getTarget() . "tailscale down");
+        exec("kill $(pidof tailscaled)");
+        exec("rm -R /mnt/data/tailscale-state");
+        exec("rm /mnt/data/tailscale");
+        exec("rm /mnt/data/tailscaled");
+    }
+
     private function StartService()
     {
         if (!file_exists('/mnt/data/tailscale-state/')) {
