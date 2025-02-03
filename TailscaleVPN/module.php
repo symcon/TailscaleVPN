@@ -257,6 +257,16 @@ class TailscaleVPN extends IPSModule
         return json_encode($form);
     }
 
+    public function UIUninstall()
+    {
+        exec($this->getTarget() . 'tailscale down');
+        exec('kill $(pidof tailscaled)');
+        exec('rm -R /mnt/data/tailscale-state');
+        exec('rm /mnt/data/tailscale');
+        exec('rm /mnt/data/tailscaled');
+        $this->ReloadForm();
+    }
+
     private function getTarget()
     {
         if (strstr('SymBox', IPS_GetKernelPlatform()) !== false) {
@@ -264,15 +274,6 @@ class TailscaleVPN extends IPSModule
         } else {
             return self::$targetDevelopment;
         }
-    }
-
-    private function UIUninstall()
-    {
-        exec($this->getTarget() . 'tailscale down');
-        exec('kill $(pidof tailscaled)');
-        exec('rm -R /mnt/data/tailscale-state');
-        exec('rm /mnt/data/tailscale');
-        exec('rm /mnt/data/tailscaled');
     }
 
     private function StartService()
