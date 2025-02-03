@@ -213,6 +213,7 @@ class TailscaleVPN extends IPSModule
         {
             $end = strpos($address, "@");
             $oem = substr($address, $start+1, $end - $start - 1);
+            $oem = $this->sanitizeDnsName($oem);
             $hostname = " " . "--hostname " . "symbox-" . $oem;
         }
 
@@ -388,5 +389,32 @@ class TailscaleVPN extends IPSModule
         }
 
         return json_encode($form);
+    }
+
+    private function sanitizeDnsName(string $input): string {
+        $input = strtolower($input);
+
+        // Replace any invalid characters with a minus
+        $input = preg_replace('/[^a-z0-9\.-]+/', '-', $input);
+
+        // Replace multiple consecutive dots with a single dot.
+        $input = preg_replace('/\.+/', '.', $input);
+
+        // Trim any leading or trailing dots and hyphens.
+        $input = trim($input, ".-");
+
+        // Process each label (part between dots) to ensure they don't start or end with hyphens.
+        $labels = explode('.', $input);
+        foreach ($labels as &$label) {
+            $label = trim($label, '-');
+
+            // Optionally: truncate labels longer than 63 characters.
+            if (strlen($label) > 63) {
+                $label = substr($label, 0, 63);
+            }
+        }
+        $input = implode('.', $labels);
+
+        return $input;
     }
 }
