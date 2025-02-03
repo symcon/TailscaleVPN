@@ -388,7 +388,13 @@ class TailscaleVPN extends IPSModule
     private function getTunnelStatus()
     {
         exec($this->getTarget() . 'tailscale status 2>&1', $status);
-        return implode(PHP_EOL, $status);
+        $lines = '';
+        foreach ($status as $line) {
+            if (!str_starts_with($line, 'Log in at:')) {
+                $lines .= $line . PHP_EOL;
+            }
+        }
+        return $lines;
     }
 
     private function isTunnelAuthenticated()
