@@ -3,21 +3,22 @@
 declare(strict_types=1);
 class TailscaleVPN extends IPSModule
 {
-    static private $version = "1.60.0";
-    static private $filename = "tailscale_%s_arm64.tgz";
-    static private $url = "https://pkgs.tailscale.com/stable/%s";
-    static private $targetProduction = "/mnt/data/";
-    static private $targetDevelopment = __DIR__ . "/../";
+    private static $version = '1.60.0';
+    private static $filename = 'tailscale_%s_arm64.tgz';
+    private static $url = 'https://pkgs.tailscale.com/stable/%s';
+    private static $targetProduction = '/mnt/data/';
+    private static $targetDevelopment = __DIR__ . '/../';
+
     public function Create()
     {
         //Never delete this line!
         parent::Create();
 
-        $this->RegisterPropertyBoolean("AutoStartVPN", false);
+        $this->RegisterPropertyBoolean('AutoStartVPN', false);
 
-        $this->RegisterPropertyString("AdvertiseRoutes", "[]");
+        $this->RegisterPropertyString('AdvertiseRoutes', '[]');
 
-        $this->RegisterVariableBoolean('State', $this->Translate('VPN'), "Switch", 0);
+        $this->RegisterVariableBoolean('State', $this->Translate('VPN'), 'Switch', 0);
         $this->EnableAction('State');
 
         $this->RegisterVariableString('Status', 'Status', '', 1);
@@ -48,7 +49,8 @@ class TailscaleVPN extends IPSModule
         $this->UpdateStatus();
     }
 
-    public function HandleAutostart() {
+    public function HandleAutostart()
+    {
         if ($this->isServiceInstalled()) {
             if (!$this->isServiceRunning()) {
                 $this->StartService();
@@ -59,8 +61,9 @@ class TailscaleVPN extends IPSModule
         }
     }
 
-    public function RequestAction($Ident, $Value) {
-        switch($Ident) {
+    public function RequestAction($Ident, $Value)
+    {
+        switch ($Ident) {
             case 'State':
                 if ($Value) {
                     if (!$this->isServiceInstalled()) {
@@ -77,43 +80,33 @@ class TailscaleVPN extends IPSModule
                     }
                     $this->StartTunnel();
                     $this->ReloadForm();
-                }
-                else {
+                } else {
                     $this->StopTunnel();
                     $this->ReloadForm();
                 }
                 SetValue($this->GetIDForIdent($Ident), $Value);
                 break;
             default:
-                throw new Exception("Invalid Ident");
-        }
-    }
-
-    private function getTarget() {
-        if(strstr("SymBox", IPS_GetKernelPlatform()) !== false) {
-            return self::$targetProduction;
-        }
-        else {
-            return self::$targetDevelopment;
+                throw new Exception('Invalid Ident');
         }
     }
 
     public function UIDownload()
     {
-        $this->UpdateFormField("DownloadButton", "visible", false);
-        $this->UpdateFormField("DownloadIndicator", "visible", true);
+        $this->UpdateFormField('DownloadButton', 'visible', false);
+        $this->UpdateFormField('DownloadIndicator', 'visible', true);
 
         // Stop Tunnel
         $tunnelRunning = $this->isTunnelRunning();
         if ($tunnelRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Stopping Tunnel..."));
+            $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Stopping Tunnel...'));
             $this->StopTunnel();
         }
 
         // Stop Service
         $serviceRunning = $this->isServiceRunning();
         if ($serviceRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Stopping Service..."));
+            $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Stopping Service...'));
             $this->StopService();
         }
 
@@ -121,10 +114,10 @@ class TailscaleVPN extends IPSModule
         $download = sprintf(self::$url, $filename);
         $target = $this->getTarget();
 
-        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Downloading..."));
+        $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Downloading...'));
         file_put_contents($target . $filename, fopen($download, 'r'));
 
-        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Extracting..."));
+        $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Extracting...'));
         ini_set('memory_limit', '128M');
         $phar = new PharData($target . $filename);
         foreach (new \RecursiveIteratorIterator($phar) as $file) {
@@ -134,20 +127,20 @@ class TailscaleVPN extends IPSModule
                 chmod($target . $file->getFileName(), 0777);
             }
         }
-        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Cleanup..."));
+        $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Cleanup...'));
         unlink($target . $filename);
 
         if ($serviceRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Starting Service..."));
+            $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Starting Service...'));
             $this->StartService();
         }
 
         if ($tunnelRunning) {
-            $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Starting Tunnel..."));
+            $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Starting Tunnel...'));
             $this->StartTunnel();
         }
 
-        $this->UpdateFormField("DownloadIndicator", "caption", $this->Translate("Please wait..."));
+        $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Please wait...'));
 
         $this->UpdateStatus();
 
@@ -166,95 +159,12 @@ class TailscaleVPN extends IPSModule
         $this->ReloadForm();
     }
 
-    private function UIUninstall()
-    {
-        exec($this->getTarget() . "tailscale down");
-        exec("kill $(pidof tailscaled)");
-        exec("rm -R /mnt/data/tailscale-state");
-        exec("rm /mnt/data/tailscale");
-        exec("rm /mnt/data/tailscaled");
-    }
-
-    private function StartService()
-    {
-        if (!file_exists('/mnt/data/tailscale-state/')) {
-            mkdir('/mnt/data/tailscale-state/');
-        }
-
-        //This does not detach from the symcon process and inherits file descriptors
-        //exec('TS_DEBUG_FIREWALL_MODE="nftables"' . ' ' . $this->getTarget() . "tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &");
-
-        //This properly detaches from the process but still inherits file descriptors
-        //exec('sh -c "TS_DEBUG_FIREWALL_MODE=nftables exec nohup setsid' . ' ' . $this->getTarget() . 'tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &"');
-
-        //We cannot use start-stop-daemon as it is buggy:  http://lists.busybox.net/pipermail/busybox/2019-March/087118.html
-        //echo exec('TS_DEBUG_FIREWALL_MODE=nftables start-stop-daemon -S -b -O /var/log/symcon/tailscale.log -x /mnt/data/tailscaled -- --statedir=/mnt/data/tailscale-state/');
-
-        //This does only properly work with IP-Symcon 7.2 which closes all fd's after fork and before exec
-        //But we cannot redirect the stdout/stderr with this method and it will be written to the statedir
-        putenv("TS_DEBUG_FIREWALL_MODE=nftables");
-        IPS_Execute($this->getTarget() . 'tailscaled', '--statedir=/mnt/data/tailscale-state/', false, false);
-
-        // Give it some time to connect
-        IPS_Sleep(2500);
-
-        //Update Status
-        $this->UpdateStatus();
-    }
-
-    private function StartTunnel($authKey = "")
-    {
-        $hostname = "";
-
-        // Determine a nicer Hostname
-        $address = IPS_GetLicensee();
-        $start = strpos($address, "+");
-        if($start !== false)
-        {
-            $end = strpos($address, "@");
-            $oem = substr($address, $start+1, $end - $start - 1);
-            $oem = $this->sanitizeDnsName($oem);
-            $hostname = " " . "--hostname " . "symbox-" . $oem;
-        }
-
-        // Check if we want to advertise routes
-        $advertiseRoutes = "";
-        $routes = [];
-
-        $ar = json_decode($this->ReadPropertyString("AdvertiseRoutes"), true);
-        foreach ($ar as $r) {
-            $routes[] = $r['Route'];
-        }
-
-        if (count($routes) > 0) {
-            $advertiseRoutes = " " . "--advertise-routes=" . implode(",", $routes);
-
-            // Enable forwarding inside kernel only if required
-            exec("echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.conf");
-            exec("echo 'net.ipv6.conf.all.forwarding = 1' >> /etc/sysctl.conf");
-            exec("sysctl -p");
-        }
-
-        if ($authKey) {
-            $authKey = " " . "--force-reauth --auth-key=" . $authKey;
-        }
-
-        exec($this->getTarget() . "tailscale up" . $authKey . $hostname . $advertiseRoutes);
-
-        // Give it some time to connect
-        IPS_Sleep(2500);
-
-        //Update Status
-        $this->UpdateStatus();
-    }
-
     public function UpdateStatus()
     {
         if (!$this->isServiceInstalled()) {
             $this->SetValue('Status', $this->Translate('Not installed!'));
             $this->SetValue('State', false);
-        }
-        else if ($this->isTunnelRunning()) {
+        } elseif ($this->isTunnelRunning()) {
             $this->SetValue('Status', $this->Translate('Connected!'));
             $this->SetValue('State', true);
         } else {
@@ -263,60 +173,16 @@ class TailscaleVPN extends IPSModule
         }
     }
 
-    private function StopTunnel()
+    public function GetConfigurationForm()
     {
-        exec($this->getTarget() . "tailscale down");
-
-        // Give it some time to disconnect
-        IPS_Sleep(2500);
-
-        //Update Status
-        $this->UpdateStatus();
-    }
-
-    private function StopService()
-    {
-        exec("kill $(pidof tailscaled)");
-
-        // Give it some time to disconnect
-        IPS_Sleep(2500);
-
-        //Update Status
-        $this->UpdateStatus();
-    }
-
-    private function isServiceInstalled() {
-        return file_exists($this->getTarget() . "tailscale");
-    }
-
-    private function isServiceRunning() {
-        return shell_exec("pidof tailscaled");
-    }
-
-    private function isTunnelRunning() {
-        exec($this->getTarget() . "tailscale status 2>&1", $status, $exitCode);
-        return ($exitCode == 0) && !str_contains(implode(PHP_EOL, $status), "not logged in");
-    }
-
-    private function getTunnelStatus() {
-        exec($this->getTarget() . "tailscale status 2>&1", $status);
-        return implode(PHP_EOL, $status);
-    }
-
-    private function isTunnelAuthenticated() {
-        $status = $this->getTunnelStatus();
-        return !(str_contains($status, "Logged out.") || str_contains($status, "not logged in"));
-    }
-
-    public function GetConfigurationForm() {
-        if (IPS_GetKernelPlatform() != "SymBox") {
+        if (IPS_GetKernelPlatform() != 'SymBox') {
             return json_encode([
-                "actions" => [
+                'actions' => [
                     [
-                        "type" => "Label",
-                        "caption" => $this->Translate("Tailscale VPN is only available for SymBox!"),
+                        'type'    => 'Label',
+                        'caption' => $this->Translate('Tailscale VPN is only available for SymBox!'),
                     ]
-            ]]);
+                ]]);
         }
 
         $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
@@ -333,7 +199,7 @@ class TailscaleVPN extends IPSModule
             unset($form['elements']);
         }
         else {
-            $result = shell_exec($this->getTarget() . "tailscale --version");
+            $result = shell_exec($this->getTarget() . 'tailscale --version');
             if ($result) {
                 $lines = explode("\n", $result);
                 $version = $lines[0];
@@ -360,7 +226,7 @@ class TailscaleVPN extends IPSModule
             $form['actions'][2]['caption'] = $this->Translate('Version') . ': ' . $version;
             $form['actions'][2]['visible'] = true;
 
-            $form['actions'][3]['caption'] = $this->Translate('Service') . ': ' . ($serviceRunning ? $this->Translate("Running!") : $this->Translate("Stopped!"));
+            $form['actions'][3]['caption'] = $this->Translate('Service') . ': ' . ($serviceRunning ? $this->Translate('Running!') : $this->Translate('Stopped!'));
             $form['actions'][3]['visible'] = true;
         }
 
@@ -378,7 +244,7 @@ class TailscaleVPN extends IPSModule
             if (!$serviceRunning) {
                 $form['actions'][4]['visible'] = true;
             }
-            else if (!$tunnelRunning) {
+            elseif (!$tunnelRunning) {
                 if ($tunnelAuthenticated) {
                     $form['actions'][7]['visible'] = true;
                 }
@@ -391,7 +257,148 @@ class TailscaleVPN extends IPSModule
         return json_encode($form);
     }
 
-    private function sanitizeDnsName(string $input): string {
+    private function getTarget()
+    {
+        if (strstr('SymBox', IPS_GetKernelPlatform()) !== false) {
+            return self::$targetProduction;
+        } else {
+            return self::$targetDevelopment;
+        }
+    }
+
+    private function UIUninstall()
+    {
+        exec($this->getTarget() . 'tailscale down');
+        exec('kill $(pidof tailscaled)');
+        exec('rm -R /mnt/data/tailscale-state');
+        exec('rm /mnt/data/tailscale');
+        exec('rm /mnt/data/tailscaled');
+    }
+
+    private function StartService()
+    {
+        if (!file_exists('/mnt/data/tailscale-state/')) {
+            mkdir('/mnt/data/tailscale-state/');
+        }
+
+        //This does not detach from the symcon process and inherits file descriptors
+        //exec('TS_DEBUG_FIREWALL_MODE="nftables"' . ' ' . $this->getTarget() . "tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &");
+
+        //This properly detaches from the process but still inherits file descriptors
+        //exec('sh -c "TS_DEBUG_FIREWALL_MODE=nftables exec nohup setsid' . ' ' . $this->getTarget() . 'tailscaled --statedir=/mnt/data/tailscale-state/ > /var/log/symcon/tailscale.log 2> /var/log/symcon/tailscale.log &"');
+
+        //We cannot use start-stop-daemon as it is buggy:  http://lists.busybox.net/pipermail/busybox/2019-March/087118.html
+        //echo exec('TS_DEBUG_FIREWALL_MODE=nftables start-stop-daemon -S -b -O /var/log/symcon/tailscale.log -x /mnt/data/tailscaled -- --statedir=/mnt/data/tailscale-state/');
+
+        //This does only properly work with IP-Symcon 7.2 which closes all fd's after fork and before exec
+        //But we cannot redirect the stdout/stderr with this method and it will be written to the statedir
+        putenv('TS_DEBUG_FIREWALL_MODE=nftables');
+        IPS_Execute($this->getTarget() . 'tailscaled', '--statedir=/mnt/data/tailscale-state/', false, false);
+
+        // Give it some time to connect
+        IPS_Sleep(2500);
+
+        //Update Status
+        $this->UpdateStatus();
+    }
+
+    private function StartTunnel($authKey = '')
+    {
+        $hostname = '';
+
+        // Determine a nicer Hostname
+        $address = IPS_GetLicensee();
+        $start = strpos($address, '+');
+        if ($start !== false) {
+            $end = strpos($address, '@');
+            $oem = substr($address, $start + 1, $end - $start - 1);
+            $oem = $this->sanitizeDnsName($oem);
+            $hostname = ' ' . '--hostname ' . 'symbox-' . $oem;
+        }
+
+        // Check if we want to advertise routes
+        $advertiseRoutes = '';
+        $routes = [];
+
+        $ar = json_decode($this->ReadPropertyString('AdvertiseRoutes'), true);
+        foreach ($ar as $r) {
+            $routes[] = $r['Route'];
+        }
+
+        if (count($routes) > 0) {
+            $advertiseRoutes = ' ' . '--advertise-routes=' . implode(',', $routes);
+
+            // Enable forwarding inside kernel only if required
+            exec("echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.conf");
+            exec("echo 'net.ipv6.conf.all.forwarding = 1' >> /etc/sysctl.conf");
+            exec('sysctl -p');
+        }
+
+        if ($authKey) {
+            $authKey = ' ' . '--force-reauth --auth-key=' . $authKey;
+        }
+
+        exec($this->getTarget() . 'tailscale up' . $authKey . $hostname . $advertiseRoutes);
+
+        // Give it some time to connect
+        IPS_Sleep(2500);
+
+        //Update Status
+        $this->UpdateStatus();
+    }
+
+    private function StopTunnel()
+    {
+        exec($this->getTarget() . 'tailscale down');
+
+        // Give it some time to disconnect
+        IPS_Sleep(2500);
+
+        //Update Status
+        $this->UpdateStatus();
+    }
+
+    private function StopService()
+    {
+        exec('kill $(pidof tailscaled)');
+
+        // Give it some time to disconnect
+        IPS_Sleep(2500);
+
+        //Update Status
+        $this->UpdateStatus();
+    }
+
+    private function isServiceInstalled()
+    {
+        return file_exists($this->getTarget() . 'tailscale');
+    }
+
+    private function isServiceRunning()
+    {
+        return shell_exec('pidof tailscaled');
+    }
+
+    private function isTunnelRunning()
+    {
+        exec($this->getTarget() . 'tailscale status 2>&1', $status, $exitCode);
+        return ($exitCode == 0) && !str_contains(implode(PHP_EOL, $status), 'not logged in');
+    }
+
+    private function getTunnelStatus()
+    {
+        exec($this->getTarget() . 'tailscale status 2>&1', $status);
+        return implode(PHP_EOL, $status);
+    }
+
+    private function isTunnelAuthenticated()
+    {
+        $status = $this->getTunnelStatus();
+        return !(str_contains($status, 'Logged out.') || str_contains($status, 'not logged in'));
+    }
+
+    private function sanitizeDnsName(string $input): string
+    {
         $input = strtolower($input);
 
         // Replace any invalid characters with a minus
@@ -401,7 +408,7 @@ class TailscaleVPN extends IPSModule
         $input = preg_replace('/\.+/', '.', $input);
 
         // Trim any leading or trailing dots and hyphens.
-        $input = trim($input, ".-");
+        $input = trim($input, '.-');
 
         // Process each label (part between dots) to ensure they don't start or end with hyphens.
         $labels = explode('.', $input);
