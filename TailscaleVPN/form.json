@@ -103,8 +103,7 @@
             "caption": "Reset completely",
             "confirm": "Do you really want to remove Tailscale completely with all associated data?",
             "name": "UninstallButton",
-            "onClick": "TSVPN_UIUninstall($id);",
-            "visible": false
+            "onClick": "TSVPN_UIUninstall($id);"
         }
     ]
 }
