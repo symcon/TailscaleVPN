@@ -3,7 +3,7 @@
 declare(strict_types=1);
 class TailscaleVPN extends IPSModule
 {
-    private static $version = '1.84.2';
+    private static $version = '1.84.0';
     private static $filename = 'tailscale_%s_arm64.tgz';
     private static $url = 'https://pkgs.tailscale.com/stable/%s';
     private static $targetProduction = '/mnt/data/';
