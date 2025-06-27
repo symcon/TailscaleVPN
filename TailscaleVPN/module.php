@@ -193,7 +193,7 @@ class TailscaleVPN extends IPSModule
 
     public function GetConfigurationForm()
     {
-        if (IPS_GetKernelPlatform() != 'SymBox') {
+        if (IPS_GetKernelPlatform() != 'SymBox' && IPS_GetKernelVersion() != '0.0') {
             return json_encode([
                 'actions' => [
                     [
