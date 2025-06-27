@@ -20,6 +20,8 @@
             "Stopping Tunnel...": "Stoppe Tunnel...",
             "Stopping Service...": "Stoppe Dienst...",
             "Downloading...": "Herunterladen...",
+            "Download failed!": "Herunterladen fehlgeschlagen!",
+            "Hash validation failed!": "Hash-Validierung fehlgeschlagen!",
             "Extracting...": "Entpacken...",
             "Cleanup...": "Aufräumen...",
             "Starting Service...": "Starte Dienst...",

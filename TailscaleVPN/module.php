@@ -5,6 +5,7 @@ class TailscaleVPN extends IPSModule
 {
     private static $version = '1.84.0';
     private static $filename = 'tailscale_%s_arm64.tgz';
+    private static $filehash = '41516fbdd12ae6cbd7f41c875812ca683c0ead54bef3393e5886c232c954996c';
     private static $url = 'https://pkgs.tailscale.com/stable/%s';
     private static $targetProduction = '/mnt/data/';
     private static $targetDevelopment = __DIR__ . '/../';
@@ -117,16 +118,33 @@ class TailscaleVPN extends IPSModule
         $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Downloading...'));
         file_put_contents($target . $filename, fopen($download, 'r'));
 
+        if (!file_exists($target . $filename)) {
+            $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Download failed!'));
+            $this->UpdateFormField('DownloadButton', 'visible', true);
+            return;
+        }
+
+        if (hash('sha256', file_get_contents($target . $filename)) != self::$filehash) {
+            $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Hash validation failed!'));
+            $this->UpdateFormField('DownloadButton', 'visible', true);
+            return;
+        }
+
         $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Extracting...'));
         ini_set('memory_limit', '128M');
         $phar = new PharData($target . $filename);
         foreach (new \RecursiveIteratorIterator($phar) as $file) {
             if (in_array($file->getFileName(), ['tailscale', 'tailscaled'])) {
+                // Delete file first. Even if it is used, we want to work around the "Text file busy" problem
+                if (file_exists($target . $file->getPathName())) {
+                    unlink($target . $file->getPathName());
+                }
                 $contents = file_get_contents($file->getPathName());
                 file_put_contents($target . $file->getFileName(), $contents);
                 chmod($target . $file->getFileName(), 0777);
             }
         }
+
         $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Cleanup...'));
         unlink($target . $filename);
 
