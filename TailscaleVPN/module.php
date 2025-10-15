@@ -359,7 +359,7 @@ class TailscaleVPN extends IPSModule
         }
 
         exec($this->getTarget() . 'tailscale up' . $authKey . $hostname . $acceptRoutes . $advertiseRoutes . '  2>&1', $status);
-        $this->SendDebug("StartTunnel", $status, 0);
+        $this->SendDebug("StartTunnel", implode(PHP_EOL, $status), 0);
 
         // Give it some time to connect
         IPS_Sleep(2500);
@@ -371,7 +371,7 @@ class TailscaleVPN extends IPSModule
     private function StopTunnel()
     {
         exec($this->getTarget() . 'tailscale down 2>&1', $status);
-        $this->SendDebug("StopTunnel", $status, 0);
+        $this->SendDebug("StopTunnel", implode(PHP_EOL, $status), 0);
 
         // Give it some time to disconnect
         IPS_Sleep(2500);
@@ -404,14 +404,14 @@ class TailscaleVPN extends IPSModule
     private function isTunnelRunning()
     {
         exec($this->getTarget() . 'tailscale status 2>&1', $status, $exitCode);
-        $this->SendDebug("TunnelStatus", $status, 0); 
+        $this->SendDebug("TunnelStatus", implode(PHP_EOL, $status), 0); 
         return ($exitCode == 0) && !str_contains(implode(PHP_EOL, $status), 'not logged in');
     }
 
     private function getTunnelStatus()
     {
         exec($this->getTarget() . 'tailscale status 2>&1', $status);
-        $this->SendDebug("TunnelStatus", $status, 0); 
+        $this->SendDebug("TunnelStatus", implode(PHP_EOL, $status), 0); 
         $lines = '';
         foreach ($status as $line) {
             if (!str_starts_with($line, 'Log in at:')) {
