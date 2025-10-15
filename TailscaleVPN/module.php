@@ -3,7 +3,7 @@
 declare(strict_types=1);
 class TailscaleVPN extends IPSModule
 {
-    private static $version = '1.84.0';
+    private static $version = '1.88.4';
     private static $filename = 'tailscale_%s_arm64.tgz';
     private static $filehash = '41516fbdd12ae6cbd7f41c875812ca683c0ead54bef3393e5886c232c954996c';
     private static $url = 'https://pkgs.tailscale.com/stable/%s';
@@ -337,6 +337,7 @@ class TailscaleVPN extends IPSModule
 
         // Check if we want to advertise routes
         $advertiseRoutes = '';
+        $acceptRoutes = ' ' . '--accept-routes=true';
         $routes = [];
 
         $ar = json_decode($this->ReadPropertyString('AdvertiseRoutes'), true);
@@ -357,7 +358,8 @@ class TailscaleVPN extends IPSModule
             $authKey = ' ' . '--force-reauth --auth-key=' . $authKey;
         }
 
-        exec($this->getTarget() . 'tailscale up' . $authKey . $hostname . $advertiseRoutes);
+        exec($this->getTarget() . 'tailscale up' . $authKey . $hostname . $acceptRoutes . $advertiseRoutes . '  2>&1', $status);
+        $this->SendDebug("StartTunnel", $status, 0);
 
         // Give it some time to connect
         IPS_Sleep(2500);
@@ -368,7 +370,8 @@ class TailscaleVPN extends IPSModule
 
     private function StopTunnel()
     {
-        exec($this->getTarget() . 'tailscale down');
+        exec($this->getTarget() . 'tailscale down 2>&1', $status);
+        $this->SendDebug("StopTunnel", $status, 0);
 
         // Give it some time to disconnect
         IPS_Sleep(2500);
@@ -401,12 +404,14 @@ class TailscaleVPN extends IPSModule
     private function isTunnelRunning()
     {
         exec($this->getTarget() . 'tailscale status 2>&1', $status, $exitCode);
+        $this->SendDebug("TunnelStatus", $status, 0); 
         return ($exitCode == 0) && !str_contains(implode(PHP_EOL, $status), 'not logged in');
     }
 
     private function getTunnelStatus()
     {
         exec($this->getTarget() . 'tailscale status 2>&1', $status);
+        $this->SendDebug("TunnelStatus", $status, 0); 
         $lines = '';
         foreach ($status as $line) {
             if (!str_starts_with($line, 'Log in at:')) {
