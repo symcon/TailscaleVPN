@@ -94,6 +94,9 @@ class TailscaleVPN extends IPSModule
 
     public function UIDownload()
     {
+        // Download and Extract needs a little bit more of RAM
+        ini_set('memory_limit', '128M');
+
         $this->UpdateFormField('DownloadButton', 'visible', false);
         $this->UpdateFormField('DownloadIndicator', 'visible', true);
 
@@ -131,7 +134,6 @@ class TailscaleVPN extends IPSModule
         }
 
         $this->UpdateFormField('DownloadIndicator', 'caption', $this->Translate('Extracting...'));
-        ini_set('memory_limit', '128M');
         $phar = new PharData($target . $filename);
         foreach (new \RecursiveIteratorIterator($phar) as $file) {
             if (in_array($file->getFileName(), ['tailscale', 'tailscaled'])) {
