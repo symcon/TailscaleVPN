@@ -38,7 +38,9 @@ class TailscaleVPN extends IPSModule
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
         if ($Message == IPS_KERNELSTARTED) {
-            $this->HandleAutostart();
+            if ($this->ReadPropertyBoolean('AutoStartVPN')) {
+                $this->HandleAutostart();
+            }
         }
     }
 
