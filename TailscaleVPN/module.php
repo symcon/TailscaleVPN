@@ -337,9 +337,9 @@ class TailscaleVPN extends IPSModule
             $hostname = ' ' . '--hostname ' . 'symbox-' . $oem;
         }
 
-        // Check if we want to advertise routes
+        // Do not accept any routes by default
         $advertiseRoutes = '';
-        $acceptRoutes = ' ' . '--accept-routes=true';
+        $acceptRoutes = ' ' . '--accept-routes=false';
         $routes = [];
 
         $ar = json_decode($this->ReadPropertyString('AdvertiseRoutes'), true);
