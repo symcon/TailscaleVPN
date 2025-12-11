@@ -49,6 +49,13 @@ class TailscaleVPN extends IPSModule
         //Never delete this line!
         parent::ApplyChanges();
 
+        // When tailscale is already running update directly
+        if ($this->isServiceInstalled()) {
+            if ($this->isServiceRunning()) {
+                exec($this->getTarget() . 'tailscale set ' . $this->getAdvertiseRoutes());
+            }
+        }
+
         $this->UpdateStatus();
     }
 
@@ -304,6 +311,36 @@ class TailscaleVPN extends IPSModule
         }
     }
 
+    private function getAdvertiseRoutes()
+    {
+        $routes = [];
+        $ar = json_decode($this->ReadPropertyString('AdvertiseRoutes'), true);
+        foreach ($ar as $r) {
+            $routes[] = $r['Route'];
+        }
+
+        if (count($routes) > 0) {
+            // Enable forwarding inside kernel only if required
+            exec("sysctl -w net.ipv4.ip_forward=1");
+
+            $dir = '/proc/sys/net/ipv6/conf/';
+            foreach (scandir($dir) as $ifName) {
+                if ($ifName === '.' || $ifName === '..' || !is_dir($dir . $ifName)) {
+                    continue;
+                }
+                exec("sysctl -w net.ipv6.conf." . $ifName . ".forwarding=1");
+
+                // Allow all RA announcements for Thread/Matter
+                // Set accept_ra = 2 to allow RAs even when forwarding is enabled
+                exec("sysctl -w net.ipv6.conf." . $ifName . ".accept_ra=2");
+            }
+
+            return '--advertise-routes=' . implode(',', $routes);
+        }
+
+        return '--advertise-routes=false';
+    }
+
     private function StartService()
     {
         if (!file_exists('/mnt/data/tailscale-state/')) {
@@ -346,33 +383,10 @@ class TailscaleVPN extends IPSModule
         }
 
         // Do not accept any routes by default
-        $advertiseRoutes = '';
         $acceptRoutes = ' ' . '--accept-routes=false';
-        $routes = [];
 
-        $ar = json_decode($this->ReadPropertyString('AdvertiseRoutes'), true);
-        foreach ($ar as $r) {
-            $routes[] = $r['Route'];
-        }
-
-        if (count($routes) > 0) {
-            $advertiseRoutes = ' ' . '--advertise-routes=' . implode(',', $routes);
-
-            // Enable forwarding inside kernel only if required
-            exec("sysctl -w net.ipv4.ip_forward=1");
-
-            // Allow all RA announcements for Thread/Matter
-            // Set accept_ra = 2 to allow RAs even when forwarding is enabled
-            $dir = '/proc/sys/net/ipv6/conf/';
-            foreach (scandir($dir) as $ifName) {
-                if ($ifName === '.' || $ifName === '..' || !is_dir($dir . $ifName)) {
-                    continue;
-                }
-                exec("sysctl -w net.ipv6.conf.' . $ifName . '.forwarding=1");
-                exec("sysctl -w net.ipv6.conf.' . $ifName . '.accept_ra=2");
-                exec("sysctl -w net.ipv6.conf.' . $ifName . '.accept_ra_rt_info_max_plen=128");
-            }
-        }
+        // Get routes that we want to advertise
+        $advertiseRoutes = ' ' . $this->getAdvertiseRoutes();
 
         if ($authKey) {
             $authKey = ' ' . '--force-reauth --auth-key=' . $authKey;
