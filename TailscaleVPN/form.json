@@ -104,6 +104,15 @@
             "confirm": "Do you really want to remove Tailscale completely with all associated data?",
             "name": "UninstallButton",
             "onClick": "TSVPN_UIUninstall($id);"
+        },
+        {
+            "type": "Button",
+            "caption": "Show Status (Debug)",
+            "onClick": "TSVPN_UIShowStatus($id);"
+        },
+        {
+            "type": "TestCenter",
+            "visible": false
         }
     ]
 }

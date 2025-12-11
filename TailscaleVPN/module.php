@@ -181,6 +181,11 @@ class TailscaleVPN extends IPSModule
         $this->ReloadForm();
     }
 
+    public function UIShowStatus()
+    {
+        echo $this->getTunnelStatus();
+    }
+
     public function UpdateStatus()
     {
         if (!$this->isServiceInstalled()) {
@@ -269,6 +274,7 @@ class TailscaleVPN extends IPSModule
             elseif (!$tunnelRunning) {
                 if ($tunnelAuthenticated) {
                     $form['actions'][7]['visible'] = true;
+                    $form['actions'][10]['visible'] = true;
                 }
                 else {
                     $form['actions'][6]['visible'] = true;
