@@ -359,7 +359,7 @@ class TailscaleVPN extends IPSModule
             // Set accept_ra = 2 to allow RAs even when forwarding is enabled
             $dir = '/proc/sys/net/ipv6/conf/';
             foreach (scandir($dir) as $ifName) {
-                if ($entry === '.' || $entry === '..' || !is_dir($dir . $ifName)) {
+                if ($ifName === '.' || $ifName === '..' || !is_dir($dir . $ifName)) {
                     continue;
                 }
                 exec("sysctl -w net.ipv6.conf.' . $ifName . '.forwarding=1");
