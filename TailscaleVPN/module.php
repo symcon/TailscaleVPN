@@ -444,7 +444,7 @@ class TailscaleVPN extends IPSModule
 
     private function getTunnelStatus()
     {
-        exec($this->getTarget() . 'tailscale status 2>&1', $status);
+        exec($this->getTarget() . 'tailscale status --peers=false --self=false 2>&1', $status);
         $this->SendDebug("TunnelStatus", implode(PHP_EOL, $status), 0); 
         $lines = '';
         foreach ($status as $line) {
