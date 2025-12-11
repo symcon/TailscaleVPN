@@ -36,7 +36,10 @@
             "Activate VPN on startup": "VPN beim Starten automatisch aktivieren",
             "Reset completely": "Komplett zurücksetzen",
             "Do you really want to remove Tailscale completely with all associated data?": "Wollen Sie Tailscale wirklich komplett mit allen zugehörigen Daten entfernen?",
-            "Not enough temporary disk space. Please reboot SymBox and try again!": "Nicht genügend temporärer Speicherplatz. Bitte starten Sie SymBox neu und versuchen Sie es erneut!"
+            "Not enough temporary disk space. Please reboot SymBox and try again!": "Nicht genügend temporärer Speicherplatz. Bitte starten Sie SymBox neu und versuchen Sie es erneut!",
+            "Unknown": "Unbekannt",
+            "Show Status (Debug)": "Zeige Status (Debug)",
+            "Stop Tunnel": "Tunnel stoppen"
         }
     }
 }

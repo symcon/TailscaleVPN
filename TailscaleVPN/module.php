@@ -194,6 +194,12 @@ class TailscaleVPN extends IPSModule
         $this->ReloadForm();
     }
 
+    public function UIStopTunnel()
+    {
+        $this->StopTunnel();
+        $this->ReloadForm();
+    }
+
     public function UIShowStatus()
     {
         echo $this->getTunnelStatus();
@@ -208,7 +214,13 @@ class TailscaleVPN extends IPSModule
             $this->SetValue('Status', $this->Translate('Connected!'));
             $this->SetValue('State', true);
         } else {
-            $this->SetValue('Status', $this->getTunnelStatus());
+            $status = $this->getTunnelStatus();
+            if ($status) {
+                $this->SetValue('Status', implode(PHP_EOL, json_decode($status)->Health));
+            }
+            else {
+                $this->SetValue('Status', $this->Translate('Unknown'));
+            }
             $this->SetValue('State', false);
         }
     }
@@ -272,7 +284,7 @@ class TailscaleVPN extends IPSModule
 
         if ($status) {
             if (!$tunnelRunning) {
-                $form['actions'][5]['caption'] = $this->Translate('Tunnel') . ': ' . $status;
+                $form['actions'][5]['caption'] = $this->Translate('Tunnel') . ': ' . json_decode($status)->BackendState;
             }
             else {
                 $form['actions'][5]['caption'] = $this->Translate('Tunnel') . ': ' . $this->Translate('Connected!');
@@ -287,11 +299,13 @@ class TailscaleVPN extends IPSModule
             elseif (!$tunnelRunning) {
                 if ($tunnelAuthenticated) {
                     $form['actions'][7]['visible'] = true;
-                    $form['actions'][10]['visible'] = true;
                 }
                 else {
                     $form['actions'][6]['visible'] = true;
                 }
+            }
+            else {
+                $form['actions'][8]['visible'] = true;
             }
         }
 
@@ -443,28 +457,28 @@ class TailscaleVPN extends IPSModule
 
     private function isTunnelRunning()
     {
-        exec($this->getTarget() . 'tailscale status 2>&1', $status, $exitCode);
-        $this->SendDebug("TunnelStatus", implode(PHP_EOL, $status), 0); 
-        return ($exitCode == 0) && !str_contains(implode(PHP_EOL, $status), 'not logged in');
+        $status = $this->getTunnelStatus();
+        return $status && (json_decode($status)->BackendState == "Running");
     }
 
     private function getTunnelStatus()
     {
-        exec($this->getTarget() . 'tailscale status --peers=false --self=false 2>&1', $status);
-        $this->SendDebug("TunnelStatus", implode(PHP_EOL, $status), 0); 
-        $lines = '';
-        foreach ($status as $line) {
-            if (!str_starts_with($line, 'Log in at:')) {
-                $lines .= $line . PHP_EOL;
-            }
+        exec($this->getTarget() . 'tailscale status --json --peers=false --self=false 2>&1', $status, $exitCode);
+        if ($exitCode == 0) {
+            $status = trim(implode(PHP_EOL, $status));
+            $this->SendDebug("TunnelStatus", $status, 0);
+            return $status;
         }
-        return $lines;
+        else {
+            $this->SendDebug("TunnelStatus", "No response!", 0);
+        }
+        return false;
     }
 
     private function isTunnelAuthenticated()
     {
         $status = $this->getTunnelStatus();
-        return !(str_contains($status, 'Logged out.') || str_contains($status, 'not logged in'));
+        return $status && (json_decode($status)->BackendState != 'NeedsLogin');
     }
 
     private function sanitizeDnsName(string $input): string
