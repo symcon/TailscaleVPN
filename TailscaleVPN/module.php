@@ -354,11 +354,9 @@ class TailscaleVPN extends IPSModule
                 // Set accept_ra = 2 to allow RAs even when forwarding is enabled
                 exec("sysctl -w net.ipv6.conf." . $ifName . ".accept_ra=2");
             }
-
-            return '--advertise-routes=' . implode(',', $routes);
         }
 
-        return '--advertise-routes=false';
+        return '--advertise-routes=' . implode(',', $routes);
     }
 
     private function StartService()
