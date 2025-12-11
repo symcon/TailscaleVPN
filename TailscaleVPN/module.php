@@ -103,6 +103,12 @@ class TailscaleVPN extends IPSModule
 
     public function UIDownload()
     {
+        // Check if we have enough temporary space
+        if (disk_free_space('/tmp') < 65 * 1024 * 1024) {
+            echo $this->Translate('Not enough temporary disk space. Please reboot SymBox and try again!');
+            return;
+        }
+
         // Download and Extract needs a little bit more of RAM
         ini_set('memory_limit', '128M');
 
