@@ -6,6 +6,15 @@
             "caption": "Activate VPN on startup"
         },
         {
+            "type": "Label",
+            "caption": "MagicDNS sometimes breaks DNS resolution on the SymBox. We recommend keeping it disabled."
+        },
+        {
+            "type": "CheckBox",
+            "name": "UseMagicDNS",
+            "caption": "Use MagicDNS (accept DNS configuration from Tailscale)"
+        },
+        {
             "type": "List",
             "name": "AdvertiseRoutes",
             "caption": "Advertise Routes",

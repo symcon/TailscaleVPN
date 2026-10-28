@@ -39,7 +39,10 @@
             "Not enough temporary disk space. Please reboot SymBox and try again!": "Nicht genügend temporärer Speicherplatz. Bitte starten Sie SymBox neu und versuchen Sie es erneut!",
             "Unknown": "Unbekannt",
             "Show Status (Debug)": "Zeige Status (Debug)",
-            "Stop Tunnel": "Tunnel stoppen"
+            "Stop Tunnel": "Tunnel stoppen",
+            "Starting the tunnel failed": "Starten des Tunnels fehlgeschlagen",
+            "Use MagicDNS (accept DNS configuration from Tailscale)": "MagicDNS verwenden (DNS-Konfiguration von Tailscale übernehmen)",
+            "MagicDNS sometimes breaks DNS resolution on the SymBox. We recommend keeping it disabled.": "MagicDNS stört auf der SymBox gelegentlich die DNS-Auflösung. Wir empfehlen, es deaktiviert zu lassen."
         }
     }
 }
