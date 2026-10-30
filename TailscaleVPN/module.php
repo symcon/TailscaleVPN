@@ -300,7 +300,7 @@ class TailscaleVPN extends IPSModule
      * after every state change.
      *
      * While the tunnel is down, 'Status' shows the last start error (if any), otherwise the health
-     * messages reported by tailscale.
+     * messages reported by tailscale. While it is up, IP forwarding is re-checked (see ensureForwarding()).
      */
     public function UpdateStatus()
     {
@@ -308,6 +308,8 @@ class TailscaleVPN extends IPSModule
             $this->SetValue('Status', $this->Translate('Not installed!'));
             $this->SetValue('State', false);
         } elseif ($this->isTunnelRunning()) {
+            // Safety net: forwarding is volatile, the tunnel state is not. Keep both in sync while connected
+            $this->ensureForwarding();
             $this->SetValue('Status', $this->Translate('Connected!'));
             $this->SetValue('State', true);
         } else {
@@ -449,38 +451,62 @@ class TailscaleVPN extends IPSModule
     }
 
     /**
-     * Returns the --advertise-routes flag built from the 'AdvertiseRoutes' property.
-     *
-     * As a side effect IPv4/IPv6 forwarding is enabled in the kernel if at least one route is configured.
-     * accept_ra is set to 2 so that router advertisements (required for Thread/Matter) still work while forwarding is on.
-     * An empty route list results in '--advertise-routes=', which clears previously advertised routes.
+     * @return string[] the routes configured in the 'AdvertiseRoutes' property
      */
-    private function getAdvertiseRoutes()
+    private function getRoutes()
     {
         $routes = [];
         $ar = json_decode($this->ReadPropertyString('AdvertiseRoutes'), true);
         foreach ($ar as $r) {
             $routes[] = $r['Route'];
         }
+        return $routes;
+    }
 
-        if (count($routes) > 0) {
-            // Enable forwarding inside kernel only if required
-            exec("sysctl -w net.ipv4.ip_forward=1");
+    /**
+     * Returns the --advertise-routes flag built from the 'AdvertiseRoutes' property.
+     * An empty route list results in '--advertise-routes=', which clears previously advertised routes.
+     */
+    private function getAdvertiseRoutes()
+    {
+        return '--advertise-routes=' . escapeshellarg(implode(',', $this->getRoutes()));
+    }
 
-            $dir = '/proc/sys/net/ipv6/conf/';
-            foreach (scandir($dir) as $ifName) {
-                if ($ifName === '.' || $ifName === '..' || !is_dir($dir . $ifName)) {
-                    continue;
-                }
-                exec("sysctl -w net.ipv6.conf." . $ifName . ".forwarding=1");
-
-                // Allow all RA announcements for Thread/Matter
-                // Set accept_ra = 2 to allow RAs even when forwarding is enabled
-                exec("sysctl -w net.ipv6.conf." . $ifName . ".accept_ra=2");
-            }
+    /**
+     * Enables IPv4/IPv6 forwarding in the kernel if at least one route is configured.
+     * accept_ra is set to 2 so that router advertisements (required for Thread/Matter) still work while forwarding is on.
+     *
+     * The sysctl settings are volatile and lost on every reboot, while tailscaled persists its preferences
+     * (including the advertised routes and the running state) in its state directory. Therefore this is
+     * called not only when the preferences are applied, but also before tailscaled is started and from the
+     * status timer, so that a tunnel which tailscaled brought up on its own never advertises routes without
+     * forwarding. The check against /proc keeps the periodic call cheap.
+     */
+    private function ensureForwarding()
+    {
+        if (count($this->getRoutes()) == 0) {
+            return;
         }
 
-        return '--advertise-routes=' . escapeshellarg(implode(',', $routes));
+        // Already enabled (IPv6 forwarding is always enabled together with IPv4)
+        if (trim((string) @file_get_contents('/proc/sys/net/ipv4/ip_forward')) === '1') {
+            return;
+        }
+
+        $this->SendDebug('ensureForwarding', 'Enabling IPv4/IPv6 forwarding', 0);
+        exec("sysctl -w net.ipv4.ip_forward=1");
+
+        $dir = '/proc/sys/net/ipv6/conf/';
+        foreach (scandir($dir) as $ifName) {
+            if ($ifName === '.' || $ifName === '..' || !is_dir($dir . $ifName)) {
+                continue;
+            }
+            exec("sysctl -w net.ipv6.conf." . $ifName . ".forwarding=1");
+
+            // Allow all RA announcements for Thread/Matter
+            // Set accept_ra = 2 to allow RAs even when forwarding is enabled
+            exec("sysctl -w net.ipv6.conf." . $ifName . ".accept_ra=2");
+        }
     }
 
     /**
@@ -534,6 +560,7 @@ class TailscaleVPN extends IPSModule
      */
     private function ApplyPreferences()
     {
+        $this->ensureForwarding();
         exec($this->getTarget() . 'tailscale set ' . $this->getPreferenceFlags() . ' 2>&1', $output, $exitCode);
         $output = trim(implode(PHP_EOL, $output));
         $this->SendDebug('ApplyPreferences', 'Exit code: ' . $exitCode . PHP_EOL . $output, 0);
@@ -546,6 +573,8 @@ class TailscaleVPN extends IPSModule
 
     /**
      * Starts tailscaled in the background with its state in /mnt/data/tailscale-state.
+     * IP forwarding is enabled beforehand, because tailscaled may bring the tunnel (and the advertised routes)
+     * up on its own from its persisted state.
      *
      * See the comments below for the approaches that did not work. IPS_Execute() is used because it closes
      * all file descriptors before exec (IP-Symcon 7.2+), which prevents tailscaled from inheriting sockets.
@@ -567,6 +596,10 @@ class TailscaleVPN extends IPSModule
 
         //This does only properly work with IP-Symcon 7.2 which closes all fd's after fork and before exec
         //But we cannot redirect the stdout/stderr with this method and it will be written to the statedir
+        // tailscaled restores its persisted preferences on start and brings the tunnel up on its own if it was
+        // running before (e.g. before a reboot). Make sure forwarding is enabled before that happens
+        $this->ensureForwarding();
+
         putenv('TS_DEBUG_FIREWALL_MODE=nftables');
         IPS_Execute($this->getTarget() . 'tailscaled', '--statedir=/mnt/data/tailscale-state/', false, false);
 
@@ -591,6 +624,7 @@ class TailscaleVPN extends IPSModule
         if ($authKey) {
             // Authentication requires 'tailscale up' with flags. As soon as any flag is given,
             // tailscale requires all non-default preferences to be mentioned, so pass all module managed ones
+            $this->ensureForwarding();
             $command = 'tailscale up --force-reauth --auth-key=' . escapeshellarg($authKey) . ' ' . $this->getPreferenceFlags();
         } else {
             // Apply all module managed preferences via 'tailscale set' and bring the tunnel up with a bare 'tailscale up'.
